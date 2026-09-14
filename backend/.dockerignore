@@ -1,6 +1,12 @@
 __pycache__
 *.pyc
 .venv
+.venv*
+.pytest_cache
+.ruff_cache
 data
 logs
+faiss_index
+*.faiss
+*.pkl
 .env
