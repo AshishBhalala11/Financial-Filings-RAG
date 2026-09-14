@@ -1,0 +1,65 @@
+{
+  "filing": "Apple Inc. Form 10-K for the fiscal year ended September 28, 2024 (SEC EDGAR accession 0000320193-24-000123). Download via python scripts/download_sample_10k.py",
+  "items": [
+    {
+      "id": "q01",
+      "question": "When did Apple's fiscal year 2024 end?",
+      "ground_truth": "Apple's fiscal year 2024 ended on September 28, 2024."
+    },
+    {
+      "id": "q02",
+      "question": "What were Apple's total net sales for fiscal 2024?",
+      "ground_truth": "Total net sales were $391,035 million for fiscal 2024."
+    },
+    {
+      "id": "q03",
+      "question": "What were iPhone net sales in fiscal 2024?",
+      "ground_truth": "iPhone net sales were $201,183 million in 2024."
+    },
+    {
+      "id": "q04",
+      "question": "What were Services net sales in fiscal 2024?",
+      "ground_truth": "Services net sales were $96,169 million in 2024."
+    },
+    {
+      "id": "q05",
+      "question": "How does the filing describe concentration of manufacturing and supply-chain risk?",
+      "ground_truth": "The Company relies on single-source or limited-source suppliers and a significant portion of manufacturing is performed by outsourcing partners, many of them concentrated in Asia, which exposes Apple to supply interruptions and geopolitical risk."
+    },
+    {
+      "id": "q06",
+      "question": "What does Item 1A say about competition?",
+      "ground_truth": "The Company faces significant competition in all of its markets, including from competitors with substantial resources, which can adversely affect market share, pricing, and results of operations."
+    },
+    {
+      "id": "q07",
+      "question": "What were net sales in Greater China for 2024?",
+      "ground_truth": "Net sales in Greater China were $66,952 million in 2024."
+    },
+    {
+      "id": "q08",
+      "question": "What is Apple's principal executive office address as stated in the filing?",
+      "ground_truth": "One Apple Park Way, Cupertino, California 95014."
+    },
+    {
+      "id": "q09",
+      "question": "Summarize how Apple describes its business in Item 1.",
+      "ground_truth": "Apple designs, manufactures, and markets smartphones, personal computers, tablets, wearables and accessories, and sells a variety of related services."
+    },
+    {
+      "id": "q10",
+      "question": "What were Mac net sales in fiscal 2024?",
+      "ground_truth": "Mac net sales were $29,984 million in 2024."
+    },
+    {
+      "id": "q11",
+      "question": "What were total net sales in 2024 and what does Item 1A say about supply-chain risk?",
+      "ground_truth": "Total net sales were $391,035 million. Item 1A discusses reliance on outsourcing partners and concentrated manufacturing, which can disrupt supply."
+    },
+    {
+      "id": "q12",
+      "question": "Does the filing state Tesla's FY2024 automotive revenue?",
+      "ground_truth": "No. This Apple 10-K does not report Tesla automotive revenue."
+    }
+  ]
+}

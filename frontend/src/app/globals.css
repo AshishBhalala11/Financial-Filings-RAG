@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: #0f1419;
+  color: #e8edf2;
+}
+
+::selection {
+  background: #c4a35a;
+  color: #0f1419;
+}

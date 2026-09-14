@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.so
+.venv/
+.venv*/
+venv/
+env/
+.pytest_cache/
+.env
+!.env.example
+
+# Runtime data
+backend/data/
+backend/logs/
+backend/faiss_index/
+sample_docs/*.pdf
+!sample_docs/.gitkeep
+
+# Node / Next.js
+node_modules/
+.pnp
+.pnp.js
+frontend/.next/
+frontend/out/
+*.tsbuildinfo
+frontend/.env.local
+!frontend/.env.local.example
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+*.iml
+*.log
