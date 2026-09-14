@@ -168,7 +168,7 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-10">
-      <header className="border-b border-line pb-6">
+      <header className="relative pb-6">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-gold">
           Financial Filings Analyst
         </p>
@@ -181,19 +181,20 @@ export default function HomePage() {
           filing only, re-ranked, and cited by page. This is not investment
           advice.
         </p>
+        <div className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
       </header>
 
       <section
         {...getRootProps({ "aria-label": "Upload a 10-K PDF" })}
-        className={`cursor-pointer rounded-lg border border-dashed p-8 text-center transition ${
+        className={`group cursor-pointer rounded-lg border border-dashed p-10 text-center transition ${
           isDragActive
             ? "border-gold bg-gold/10"
-            : "border-line bg-panel hover:border-gold/60"
+            : "border-line bg-panel hover:border-gold/60 hover:bg-panel/80"
         }`}
       >
         <input {...getInputProps()} />
         <Upload
-          className="mx-auto mb-3 h-6 w-6 text-gold"
+          className="mx-auto mb-3 h-6 w-6 text-gold transition-transform duration-200 group-hover:scale-110"
           aria-hidden="true"
         />
         <p className="text-sm">
@@ -273,25 +274,33 @@ export default function HomePage() {
         {turns.map((turn) => (
           <article
             key={turn.id}
-            className="rounded-lg border border-line bg-panel p-4"
+            className="flex flex-col gap-3"
           >
-            <p className="text-sm font-medium text-gold">You</p>
-            <p className="mt-1 text-sm">{turn.question}</p>
-            <div aria-live="polite">
-              {turn.error && (
-                <p className="mt-3 text-sm text-red-300">{turn.error}</p>
-              )}
-              {!turn.response && !turn.error && (
-                <p className="mt-3 flex items-center gap-2 text-sm text-paper/60">
-                  <Loader2
-                    className="h-4 w-4 animate-spin"
-                    aria-hidden="true"
-                  />
-                  Retrieving, re-ranking, generating…
+            <div className="ml-auto max-w-[80%] rounded-2xl rounded-tr-sm border border-line bg-panel px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gold/80">
+                You
+              </p>
+              <p className="mt-1 text-sm">{turn.question}</p>
+            </div>
+            <div className="rounded-2xl border border-line bg-panel p-4 shadow-sm">
+              {(turn.error || (!turn.response && !turn.error)) && (
+                <p aria-live="polite">
+                  {turn.error && (
+                    <span className="text-sm text-red-300">{turn.error}</span>
+                  )}
+                  {!turn.response && !turn.error && (
+                    <span className="flex items-center gap-2 text-sm text-paper/60">
+                      <Loader2
+                        className="h-4 w-4 animate-spin text-gold"
+                        aria-hidden="true"
+                      />
+                      Retrieving, re-ranking, generating…
+                    </span>
+                  )}
                 </p>
               )}
+              {turn.response && <AnswerBlock result={turn.response} />}
             </div>
-            {turn.response && <AnswerBlock result={turn.response} />}
           </article>
         ))}
         <div ref={chatEndRef} aria-hidden="true" />
@@ -299,7 +308,7 @@ export default function HomePage() {
 
       <form
         onSubmit={onAsk}
-        className="sticky bottom-4 flex gap-2 rounded-lg border border-line bg-ink p-2"
+        className="sticky bottom-4 flex gap-2 rounded-xl border border-line bg-ink p-2 shadow-lg shadow-black/30"
       >
         <input
           ref={inputRef}
@@ -319,7 +328,7 @@ export default function HomePage() {
         <button
           type="submit"
           disabled={asking || !activeDocument || !question.trim()}
-          className="inline-flex items-center gap-2 rounded bg-gold px-4 py-2 text-sm font-medium text-ink disabled:opacity-40"
+          className="inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-medium text-ink transition hover:bg-gold/90 active:scale-[0.98] disabled:opacity-40 disabled:hover:bg-gold"
         >
           {asking ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

@@ -16,3 +16,30 @@ body {
   background: #c4a35a;
   color: #0f1419;
 }
+
+:focus-visible {
+  outline: 2px solid #c4a35a;
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid #c4a35a;
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a3544;
+  border-radius: 8px;
+  border: 2px solid #0f1419;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4a5e;
+}

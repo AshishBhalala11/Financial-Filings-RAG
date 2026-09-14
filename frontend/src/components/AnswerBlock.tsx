@@ -16,13 +16,13 @@ export function AnswerBlock({ result }: AnswerBlockProps) {
     <div className="mt-4 border-t border-line pt-4">
       <p className="mb-2 text-sm font-medium text-gold">Analyst</p>
       <div className="mb-2 flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-wide text-paper/50">
-        <span className="rounded border border-line px-2 py-0.5 text-gold">
+        <span className="rounded-full border border-gold/40 bg-gold/5 px-2 py-0.5 text-gold">
           {result.route_type}
         </span>
         {result.sub_queries.map((subQuery, index) => (
           <span
             key={`${result.route_type}-${index}-${subQuery}`}
-            className="rounded bg-ink px-2 py-0.5 normal-case tracking-normal"
+            className="rounded-full bg-ink px-2 py-0.5 normal-case tracking-normal"
           >
             {subQuery}
           </span>
@@ -37,7 +37,7 @@ export function AnswerBlock({ result }: AnswerBlockProps) {
         type="button"
         aria-expanded={sourcesExpanded}
         onClick={() => setSourcesExpanded((expanded) => !expanded)}
-        className="mt-4 inline-flex items-center gap-2 font-mono text-xs text-gold"
+        className="mt-4 inline-flex items-center gap-2 font-mono text-xs text-gold transition hover:text-gold/80"
       >
         <FileText className="h-3.5 w-3.5" aria-hidden="true" />
         {sourcesExpanded ? "Hide" : "Show"} {result.sources.length} source
@@ -49,13 +49,15 @@ export function AnswerBlock({ result }: AnswerBlockProps) {
           {result.sources.map((source) => (
             <li
               key={source.chunk_id}
-              className="rounded border border-line bg-ink p-3 font-mono text-xs leading-relaxed text-paper/80"
+              className="rounded-lg border border-line bg-ink p-3 font-mono text-xs leading-relaxed text-paper/80 transition hover:border-gold/40"
             >
-              <p className="mb-1 text-gold">
-                {source.source ?? "filing"} · p. {source.page ?? "?"} ·{" "}
-                {source.section ?? "section n/a"}
+              <p className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-gold">
+                <span>
+                  {source.source ?? "filing"} · p. {source.page ?? "?"} ·{" "}
+                  {source.section ?? "section n/a"}
+                </span>
                 {source.rerank_score != null && (
-                  <span className="ml-2 text-paper/40">
+                  <span className="text-paper/40">
                     rerank {source.rerank_score.toFixed(3)}
                   </span>
                 )}
