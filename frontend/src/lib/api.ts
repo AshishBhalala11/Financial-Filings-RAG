@@ -73,3 +73,21 @@ export async function askQuestion(
   }
   return response.json();
 }
+
+export async function suggestQuestions(
+  documentId: string | null
+): Promise<string[]> {
+  const response = await fetch(`${API_BASE_URL}/api/suggest`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(60_000),
+    body: JSON.stringify({ document_id: documentId }),
+  });
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response, `Suggestion failed (${response.status})`)
+    );
+  }
+  const body = (await response.json()) as { questions: string[] };
+  return body.questions;
+}

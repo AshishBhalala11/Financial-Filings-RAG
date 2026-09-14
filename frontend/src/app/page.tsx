@@ -5,7 +5,12 @@ import { useDropzone } from "react-dropzone";
 import { Loader2, Send, Upload } from "lucide-react";
 
 import { AnswerBlock } from "@/components/AnswerBlock";
-import { askQuestion, checkBackendHealth, uploadPdf } from "@/lib/api";
+import {
+  askQuestion,
+  checkBackendHealth,
+  suggestQuestions,
+  uploadPdf,
+} from "@/lib/api";
 import type { QueryResponse, UploadResponse } from "@/types";
 
 type ChatTurn = {
@@ -20,6 +25,14 @@ type Notice = {
   type: "success" | "error";
 };
 
+const FALLBACK_SUGGESTIONS = [
+  "What were the company's total net sales in the most recent fiscal year?",
+  "What are the key risk factors described in the filing?",
+  "How did net income change compared to the prior fiscal year?",
+  "Which business segments contributed the most to revenue?",
+  "How much cash and cash equivalents did the company hold?",
+];
+
 export default function HomePage() {
   const [activeDocument, setActiveDocument] = useState<UploadResponse | null>(
     null
@@ -28,6 +41,7 @@ export default function HomePage() {
   const [asking, setAsking] = useState(false);
   const [question, setQuestion] = useState("");
   const [turns, setTurns] = useState<ChatTurn[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [backendReady, setBackendReady] = useState(false);
 
@@ -78,6 +92,11 @@ export default function HomePage() {
     inputRef.current?.focus();
   }
 
+  function suggestQuestion(suggested: string) {
+    setQuestion(suggested);
+    inputRef.current?.focus();
+  }
+
   const onDrop = useCallback(async (files: File[]) => {
     const file = files[0];
     if (!file) return;
@@ -87,10 +106,19 @@ export default function HomePage() {
       const result = await uploadPdf(file);
       setActiveDocument(result);
       setTurns([]);
+      setSuggestions([]);
       setNotice({
         message: `Indexed ${result.filename} · ${result.page_count} pages · ${result.chunk_count} chunks`,
         type: "success",
       });
+      try {
+        const suggested = await suggestQuestions(result.document_id);
+        setSuggestions(
+          suggested.length > 0 ? suggested : FALLBACK_SUGGESTIONS
+        );
+      } catch {
+        setSuggestions(FALLBACK_SUGGESTIONS);
+      }
     } catch (err) {
       setNotice({
         message: err instanceof Error ? err.message : "Upload failed",
@@ -218,11 +246,29 @@ export default function HomePage() {
             upload, with page citations.
           </p>
         )}
-        {turns.length === 0 && activeDocument && (
+        {turns.length === 0 && activeDocument && suggestions.length === 0 && (
           <p className="text-sm text-paper/50">
-            Try: “What were total net sales in fiscal 2024 and what does Item
-            1A say about supply-chain risk?”
+            Generating suggested questions for this filing…
           </p>
+        )}
+        {turns.length === 0 && activeDocument && suggestions.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm text-paper/50">
+              Ask about this filing — try one of these:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onClick={() => suggestQuestion(suggestion)}
+                  className="rounded-full border border-line bg-panel px-3 py-1.5 text-left text-xs text-paper/80 transition hover:border-gold/60 hover:text-gold"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
         {turns.map((turn) => (
           <article

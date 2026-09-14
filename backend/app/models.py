@@ -68,6 +68,14 @@ class QueryResponse(BaseModel):
     post_rerank: list[RankedChunk]
 
 
+class SuggestRequest(StrictRequest):
+    document_id: str | None = None
+
+
+class SuggestResponse(BaseModel):
+    questions: list[str]
+
+
 class EvalRequest(StrictRequest):
     question: str = Field(min_length=3, max_length=4000)
     answer: str = Field(min_length=1, max_length=20_000)

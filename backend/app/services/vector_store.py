@@ -78,6 +78,32 @@ def reset_store_cache() -> None:
         _store = None
 
 
+def sample_documents(n: int = 8) -> list[Document]:
+    """Return up to `n` documents spread across the index (deep copies)."""
+    with _store_lock:
+        store = load_vector_store()
+        positions = sorted(store.index_to_docstore_id.keys())
+        if not positions:
+            return []
+        docstore_ids = [store.index_to_docstore_id[position] for position in positions]
+        if len(docstore_ids) <= n:
+            chosen = docstore_ids
+        else:
+            step = len(docstore_ids) / n
+            chosen = [docstore_ids[int(i * step)] for i in range(n)]
+        documents: list[Document] = []
+        for docstore_id in chosen:
+            document = store.docstore.search(docstore_id)
+            if document is not None:
+                documents.append(
+                    Document(
+                        page_content=document.page_content,
+                        metadata=deepcopy(document.metadata),
+                    )
+                )
+        return documents
+
+
 def replace_documents(documents: list[Document]) -> int:
     """Replace the single-source index with the supplied document chunks."""
     global _store

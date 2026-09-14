@@ -94,3 +94,17 @@ def test_item_tagging_supports_later_form_sections():
         "Item 9"
     )
     assert tag_section("Item 10. Directors, Executive Officers") == "Item 10"
+
+
+def test_suggest_falls_back_to_generic_without_api_key(monkeypatch):
+    from app.services import suggest as suggest_service
+
+    fake_settings = type("FakeSettings", (), {"openrouter_api_key": ""})()
+    monkeypatch.setattr(suggest_service, "get_settings", lambda: fake_settings)
+
+    response = client.post("/api/suggest", json={})
+    assert response.status_code == 200
+    body = response.json()
+    assert "questions" in body
+    assert isinstance(body["questions"], list)
+    assert len(body["questions"]) > 0

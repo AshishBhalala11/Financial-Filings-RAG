@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
 from app.config import get_settings
-from app.routes import evaluate, query, upload
+from app.routes import evaluate, query, suggest, upload
 from app.services.embeddings import get_embeddings
 
 logging.basicConfig(
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    """Load the embedding model at startup so first upload is not blocked on download."""
+    """Warm the embedding model so first upload is not blocked on download."""
     logger.info("Warming embedding model: %s", settings.embedding_model)
     await run_in_threadpool(lambda: get_embeddings().embed_query("warmup"))
     logger.info("Embedding model ready.")
@@ -56,6 +56,7 @@ app.add_middleware(
 
 app.include_router(upload.router, prefix="/api", tags=["Documents"])
 app.include_router(query.router, prefix="/api", tags=["RAG"])
+app.include_router(suggest.router, prefix="/api", tags=["RAG"])
 app.include_router(evaluate.router, prefix="/api", tags=["Evaluation"])
 
 
