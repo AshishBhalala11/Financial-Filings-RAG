@@ -7,6 +7,19 @@ This stack uses **local sentence-transformers + FAISS** (not serverless). Plan o
 
 ---
 
+## Features
+
+- **Single-source 10-K RAG** — upload one annual-report PDF; uploading another atomically replaces the active index.
+- **Cited, grounded answers** — answers are generated only from retrieved chunks with page citations, and the assistant refuses when the filing does not support the question.
+- **Smart query routing** — questions are classified as lookup / multi-part / summarization (LLM with a deterministic heuristic fallback); multi-part questions are decomposed, retrieved per part, merged, and re-ranked.
+- **Two-stage retrieval** — local MiniLM embeddings + FAISS, then a cross-encoder re-ranker (pre/post order logged for transparency).
+- **Filing-aware suggested questions** — after upload, the LLM proposes analyst questions that are answerable from that filing's content (generic fallback without an API key).
+- **Background RAGAS evaluation** — faithfulness, answer relevancy, and context precision are appended to JSONL on every turn.
+- **Analyst-oriented UI** — drag-and-drop upload, conversation with auto-scroll, expandable cited sources, clear-chat, and one-click example questions.
+- **Runs without an LLM for retrieval** — embeddings and re-ranking are local; upload/indexing (and generic suggestions) still work with no API key.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -30,6 +43,7 @@ PDF upload
     → pdfplumber (pypdf fallback), page numbers preserved
     → recursive chunks (~2400 chars, 300 overlap) + Item 1 / 1A / 7 / 8 tags
     → MiniLM embeddings → FAISS inner-product index on disk
+    → after upload: LLM proposes suggested questions from a sample of chunks
 User question
     → route + optional sub-query decomposition
     → FAISS top-k per sub-query (merged, de-duplicated)
@@ -134,9 +148,10 @@ FAISS and eval logs live in named volumes.
 ## Usage
 
 1. Drop a text-based 10-K PDF (≤ 50 MB) on the desk. Uploading another PDF atomically replaces the active single-source index.
-2. Ask a question. Multi-part questions (e.g. sales **and** Item 1A) are split; each part is retrieved, then merged and re-ranked.
+2. Ask a question — or tap one of the **suggested-question chips** generated from this filing. Multi-part questions (e.g. sales **and** Item 1A) are split; each part is retrieved, then merged and re-ranked.
 3. Expand **sources** to see chunk text, 10-K item tag, and page number.
-4. RAGAS scores for that turn are appended to `backend/logs/ragas_eval.jsonl` (async; not shown in the UI).
+4. Use **Clear chat** to start a fresh conversation against the same filing.
+5. RAGAS scores for that turn are appended to `backend/logs/ragas_eval.jsonl` (async; not shown in the UI).
 
 The assistant will say the fact is **not in the uploaded filing** if retrieval cannot support it (try asking for Tesla automotive revenue on an Apple 10-K).
 
@@ -149,6 +164,7 @@ The assistant will say the fact is **not in the uploaded filing** if retrieval c
 | `/health` | GET | `{"status":"ok","service":"financial-filings-analyst"}` |
 | `/api/upload` | POST | multipart `file`; returns `document_id`, page and chunk counts |
 | `/api/query` | POST | `{question, document_id?, evaluate?}` → answer, sources, `route_type`, `sub_queries`, pre/post rerank lists |
+| `/api/suggest` | POST | `{document_id?}` → up to 5 analyst questions grounded in the indexed filing |
 | `/api/evaluate` | POST | `{question, answer, contexts, ground_truth?}` → RAGAS metrics, evaluation status + JSONL |
 | `/docs` | GET | Swagger UI |
 
@@ -161,6 +177,16 @@ The assistant will say the fact is **not in the uploaded filing** if retrieval c
   "evaluate": true
 }
 ```
+
+### `POST /api/suggest` body
+
+```json
+{
+  "document_id": null
+}
+```
+
+Returns `{"questions": ["What were total net sales in the most recent fiscal year?", ...]}`. Falls back to generic 10-K questions when there is no indexed filing, no API key, or the generation call fails.
 
 ---
 
@@ -254,9 +280,9 @@ Labeled set: [`backend/eval/eval_set.json`](backend/eval/eval_set.json) (12 ques
 AI-Phase-1-project/
 ├── backend/
 │   ├── app/main.py, config.py, models.py
-│   ├── app/routes/   upload.py, query.py, evaluate.py
+│   ├── app/routes/   upload.py, query.py, suggest.py, evaluate.py
 │   ├── app/services/ ingestion, embeddings, vector_store,
-│   │                 router, reranker, rag_chain, evaluator
+│   │                 router, reranker, rag_chain, evaluator, suggest
 │   ├── eval/         eval_set.json, run_eval.py, rerank_demo.py
 │   ├── scripts/      query_cli.py
 │   ├── tests/        API, retrieval, and reranking unit tests
@@ -301,4 +327,4 @@ ruff format --check .
 pytest -q
 ```
 
-Covers `/health`, PDF validation, 10-K item tagging, query routing, persisted inner-product retrieval, single-source replacement, and multi-part reranking. Full LLM/RAGAS behavior requires an API key and is verified with the CLI steps above.
+Covers `/health`, PDF validation, 10-K item tagging, query routing, persisted inner-product retrieval, single-source replacement, multi-part reranking, and question-suggestion fallback. Full LLM/RAGAS behavior requires an API key and is verified with the CLI steps above.
