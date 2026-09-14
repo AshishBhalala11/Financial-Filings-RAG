@@ -23,14 +23,27 @@ htmlcov/
 !**/.env.example
 !**/.env.*.example
 
+# Secrets (never commit real keys)
+backend/.env
+frontend/.env
+frontend/.env*.local
+!frontend/.env.local.example
+*.pem
+*.key
+
 # Runtime data (FAISS index, eval logs, uploaded PDFs)
 backend/data/
 backend/logs/
 backend/faiss_index/
+uploads/
 *.faiss
 *.pkl
-sample_docs/*.pdf
+*.pdf
 !sample_docs/.gitkeep
+sample_docs/*.pdf
+
+# Model caches (when HF_HOME or similar points inside the repo)
+**/huggingface/
 
 # Node / Next.js
 node_modules/
@@ -38,9 +51,12 @@ node_modules/
 .pnp.js
 frontend/.next/
 frontend/out/
+.turbo/
 *.tsbuildinfo
-frontend/.env*.local
-!frontend/.env.local.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # OS / IDE
 .DS_Store
@@ -48,5 +64,7 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+.cursor/
 *.iml
 *.log
+coverage.xml
