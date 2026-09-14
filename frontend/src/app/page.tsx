@@ -1,11 +1,11 @@
 "use client";
 
-import { FormEvent, useCallback, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Loader2, Send, Upload } from "lucide-react";
 
 import { AnswerBlock } from "@/components/AnswerBlock";
-import { askQuestion, uploadPdf } from "@/lib/api";
+import { askQuestion, checkBackendHealth, uploadPdf } from "@/lib/api";
 import type { QueryResponse, UploadResponse } from "@/types";
 
 type ChatTurn = {
@@ -29,6 +29,54 @@ export default function HomePage() {
   const [question, setQuestion] = useState("");
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [backendReady, setBackendReady] = useState(false);
+
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function waitForBackend() {
+      while (!cancelled) {
+        const ready = await checkBackendHealth();
+        if (ready) {
+          setBackendReady(true);
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2_000));
+      }
+    }
+
+    void waitForBackend();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (turns.length > 0) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [turns, asking]);
+
+  useEffect(() => {
+    if (!asking && activeDocument) {
+      inputRef.current?.focus();
+    }
+  }, [asking, activeDocument]);
+
+  useEffect(() => {
+    if (!notice || notice.type !== "success") return;
+    const timer = window.setTimeout(() => setNotice(null), 6_000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  function clearConversation() {
+    setTurns([]);
+    setNotice(null);
+    inputRef.current?.focus();
+  }
 
   const onDrop = useCallback(async (files: File[]) => {
     const file = files[0];
@@ -57,7 +105,7 @@ export default function HomePage() {
     onDrop,
     accept: { "application/pdf": [".pdf"] },
     maxFiles: 1,
-    disabled: uploading || asking,
+    disabled: uploading || asking || !backendReady,
   });
 
   async function onAsk(event: FormEvent) {
@@ -94,7 +142,7 @@ export default function HomePage() {
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-10">
       <header className="border-b border-line pb-6">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-gold">
-          Phase 1 · Option 4 · Financial Filings Analyst
+          Financial Filings Analyst
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">
           10-K desk
@@ -121,17 +169,34 @@ export default function HomePage() {
           aria-hidden="true"
         />
         <p className="text-sm">
-          {uploading
-            ? "Extracting pages, chunking, embedding…"
-            : "Drop a 10-K PDF here, or click to browse"}
+          {!backendReady
+            ? "Waiting for backend — loading embedding model (first start can take ~1 min)…"
+            : uploading
+              ? "Extracting pages, chunking, embedding…"
+              : activeDocument
+                ? "Drop a new 10-K PDF to replace the active filing, or click to browse"
+                : "Drop a 10-K PDF here, or click to browse"}
         </p>
-        {activeDocument && (
-          <p className="mt-2 font-mono text-xs text-paper/60">
-            Active: {activeDocument.filename} (
-            {activeDocument.document_id.slice(0, 8)}…)
-          </p>
-        )}
       </section>
+
+      {activeDocument && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-panel px-4 py-2 text-xs">
+          <p className="min-w-0 flex-1 truncate font-mono text-paper/80">
+            <span className="text-gold">Active:</span> {activeDocument.filename}{" "}
+            · {activeDocument.page_count} pages · {activeDocument.chunk_count}{" "}
+            chunks
+          </p>
+          {turns.length > 0 && (
+            <button
+              type="button"
+              onClick={clearConversation}
+              className="shrink-0 font-mono text-paper/50 underline-offset-2 transition hover:text-gold hover:underline"
+            >
+              Clear chat
+            </button>
+          )}
+        </div>
+      )}
 
       {notice && (
         <p
@@ -147,7 +212,13 @@ export default function HomePage() {
       )}
 
       <section className="flex flex-1 flex-col gap-4">
-        {turns.length === 0 && (
+        {turns.length === 0 && !activeDocument && (
+          <p className="text-sm text-paper/50">
+            Upload a 10-K PDF to get started — answers come from the filing you
+            upload, with page citations.
+          </p>
+        )}
+        {turns.length === 0 && activeDocument && (
           <p className="text-sm text-paper/50">
             Try: “What were total net sales in fiscal 2024 and what does Item
             1A say about supply-chain risk?”
@@ -177,6 +248,7 @@ export default function HomePage() {
             {turn.response && <AnswerBlock result={turn.response} />}
           </article>
         ))}
+        <div ref={chatEndRef} aria-hidden="true" />
       </section>
 
       <form
@@ -184,11 +256,18 @@ export default function HomePage() {
         className="sticky bottom-4 flex gap-2 rounded-lg border border-line bg-ink p-2"
       >
         <input
+          ref={inputRef}
           aria-label="Question about the active filing"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Ask a question grounded in the uploaded filing…"
-          className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-paper/40"
+          placeholder={
+            activeDocument
+              ? "Ask a question grounded in the uploaded filing…"
+              : "Upload a 10-K PDF first, then ask questions…"
+          }
+          enterKeyHint="send"
+          autoComplete="off"
+          className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-paper/40 disabled:text-paper/30"
           disabled={asking || !activeDocument}
         />
         <button

@@ -10,10 +10,11 @@ type AnswerBlockProps = {
 };
 
 export function AnswerBlock({ result }: AnswerBlockProps) {
-  const [sourcesExpanded, setSourcesExpanded] = useState(true);
+  const [sourcesExpanded, setSourcesExpanded] = useState(false);
 
   return (
     <div className="mt-4 border-t border-line pt-4">
+      <p className="mb-2 text-sm font-medium text-gold">Analyst</p>
       <div className="mb-2 flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-wide text-paper/50">
         <span className="rounded border border-line px-2 py-0.5 text-gold">
           {result.route_type}

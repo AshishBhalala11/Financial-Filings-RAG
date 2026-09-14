@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import logging
 import sys
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from app.config import get_settings
 from app.routes import evaluate, query, upload
+from app.services.embeddings import get_embeddings
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,8 +23,20 @@ logging.basicConfig(
 
 settings = get_settings()
 logging.getLogger().setLevel(getattr(logging, settings.log_level.upper(), logging.INFO))
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Load the embedding model at startup so first upload is not blocked on download."""
+    logger.info("Warming embedding model: %s", settings.embedding_model)
+    await run_in_threadpool(lambda: get_embeddings().embed_query("warmup"))
+    logger.info("Embedding model ready.")
+    yield
+
 
 app = FastAPI(
+    lifespan=lifespan,
     title="Financial Filings Analyst",
     description=(
         "Phase 1 single-source RAG over 10-K / annual-report PDFs. "
@@ -45,6 +60,7 @@ app.include_router(evaluate.router, prefix="/api", tags=["Evaluation"])
 
 
 @app.get("/health", tags=["System"])
+@app.get("/api/health", tags=["System"], include_in_schema=False)
 async def health_check() -> JSONResponse:
     return JSONResponse({"status": "ok", "service": "financial-filings-analyst"})
 

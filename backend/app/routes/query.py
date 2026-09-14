@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from openai import AuthenticationError
 from starlette.concurrency import run_in_threadpool
 
 from app.models import QueryRequest, QueryResponse, RankedChunk, SourceChunk
@@ -35,6 +36,14 @@ async def query_filing(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(exc),
+        ) from exc
+    except AuthenticationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "OpenRouter authentication failed. Set a valid OPENROUTER_API_KEY "
+                "(sk-or-v1-...) in backend/.env. See https://openrouter.ai/keys"
+            ),
         ) from exc
     except Exception as exc:
         logger.exception("Query failed")
